@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Mini Cassino 3x3</title>
+<style>
+    body {
+        background-color: black;
+        color: gold;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    #saldo {
+        font-size: 24px;
+        margin-top: 20px;
+    }
+    #aposta {
+        width: 60px;
+        font-size: 18px;
+        text-align: center;
+    }
+    button {
+        font-size: 18px;
+        margin: 5px;
+        padding: 10px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    #resultado {
+        font-size: 48px;
+        margin-top: 20px;
+        white-space: pre-line;
+    }
+    #catalogo {
+        font-size: 18px;
+        margin-top: 10px;
+        display: none;
+        text-align: left;
+        max-width: 200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>🎰 Mini Cassino 3x3 🎰</h1>
+<div id="saldo">💰 Saldo: 10 moedas</div>
+
+<input type="number" id="aposta" value="1" min="1">
+<button onclick="apostar()">🎲 Apostar</button>
+<button onclick="toggleCatalogo()">📖 Catálogo</button>
+<button id="bonusBtn" onclick="darBonus()" style="display:none;">💵 10 de cada 💵</button>
+
+<div id="resultado">🎰</div>
+<div id="catalogo"></div>
+
+<audio id="somDinheiro" src="dinheiro.mp3"></audio>
+
+<script>
+let saldo = 10;
+let apostaMin = 1;
+let bonusUsos = 0;
+let bonusMax = 5;
+
+const simbolos = ["🍌", "🍍", "🍏", "🍉", "🍇"];
+const multiplicadores = {"🍌":1, "🍍":1, "🍏":2, "🍉":3, "🍇":5};
+
+function atualizarSaldo() {
+    document.getElementById("saldo").innerText = `💰 Saldo: ${saldo} moedas`;
+}
+
+function apostar() {
+    let aposta = parseInt(document.getElementById("aposta").value);
+    if(isNaN(aposta) || aposta < apostaMin) {
+        alert(`Aposta mínima é ${apostaMin}`);
+        return;
+    }
+    if(aposta > saldo) {
+        alert("Saldo insuficiente!");
+        return;
+    }
+
+    saldo -= aposta;
+    atualizarSaldo();
+
+    // Resultado 3x3
+    let resultado = [];
+    for(let i=0;i<9;i++) resultado.push(simbolos[Math.floor(Math.random()*simbolos.length)]);
+
+    let texto = "";
+    for(let i=0;i<9;i+=3) texto += resultado.slice(i,i+3).join(" ") + "\n";
+    document.getElementById("resultado").innerText = texto;
+
+    // Calcular ganhos
+    let ganho = 0;
+    for(let i=0;i<9;i+=3) if(resultado[i]===resultado[i+1] && resultado[i]===resultado[i+2]) ganho += aposta*multiplicadores[resultado[i]];
+    if(resultado[0]===resultado[4] && resultado[0]===resultado[8]) ganho += aposta*multiplicadores[resultado[0]];
+    if(resultado[2]===resultado[4] && resultado[2]===resultado[6]) ganho += aposta*multiplicadores[resultado[2]];
+
+    if(ganho>0){
+        saldo += ganho;
+        document.getElementById("resultado").innerText += `\n🎉 Ganhou ${ganho} moedas!`;
+        document.getElementById("somDinheiro").play();
+    } else {
+        document.getElementById("resultado").innerText += `\n😢 Perdeu a aposta!`;
+    }
+
+    atualizarSaldo();
+
+    if(saldo<=0){
+        document.getElementById("bonusBtn").style.display = "inline-block";
+    }
+}
+
+function darBonus() {
+    if(bonusUsos>=bonusMax){
+        document.getElementById("resultado").innerText="🚫 Acabou o dinheiro Paizão!";
+        document.getElementById("bonusBtn").style.display="none";
+        return;
+    }
+    bonusUsos++;
+    saldo += 20;
+    atualizarSaldo();
+    document.getElementById("resultado").innerText=`💵 Você recebeu 20 moedas!\n(${bonusUsos}/${bonusMax} usados)`;
+    document.getElementById("bonusBtn").style.display="none";
+}
+
+function toggleCatalogo() {
+    let cat = document.getElementById("catalogo");
+    if(cat.style.display==="none"){
+        let texto="📖 Catálogo de Símbolos 📖\n\n";
+        for(let s in multiplicadores) texto += `${s} → x${multiplicadores[s]}\n`;
+        cat.innerText = texto;
+        cat.style.display="block";
+    } else {
+        cat.style.display="none";
+    }
+}
+</script>
+</body>
+</html>
